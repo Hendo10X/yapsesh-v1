@@ -7,6 +7,7 @@ import { TabNav } from "@/components/tab-nav";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProtectedPage() {
   const router = useRouter();
@@ -49,11 +50,53 @@ export default function ProtectedPage() {
   const renderContent = () => {
     switch (activeTab) {
       case "for-you":
-        return <div className="p-4">For You content goes here</div>;
+        return (
+          <motion.div
+            key="for-you"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+            }}
+            className="p-4">
+            For You content goes here
+          </motion.div>
+        );
       case "following":
-        return <div className="p-4">Following content goes here</div>;
+        return (
+          <motion.div
+            key="following"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+            }}
+            className="p-4">
+            Following content goes here
+          </motion.div>
+        );
       case "polls":
-        return <div className="p-4">Polls content goes here</div>;
+        return (
+          <motion.div
+            key="polls"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+            }}
+            className="p-4">
+            Polls content goes here
+          </motion.div>
+        );
       default:
         return null;
     }
@@ -66,7 +109,7 @@ export default function ProtectedPage() {
         <Navbar />
         <div className="w-full max-w-4xl mt-20">
           <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
-          {renderContent()}
+          <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
         </div>
       </div>
     </>
