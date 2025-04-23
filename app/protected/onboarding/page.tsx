@@ -56,6 +56,7 @@ export default function OnboardingPage() {
     setError(null);
 
     if (!userId) {
+      console.error("No userId found");
       setError("Not authenticated");
       return;
     }
@@ -76,29 +77,51 @@ export default function OnboardingPage() {
       try {
         const validatedData = finalStepSchema.parse(formData);
 
-        const { error: supabaseError } = await supabase
+        // Get current user's email
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user?.email) {
+          console.error("User email not found");
+          setError("User email not found");
+          return;
+        }
+
+        // First try to update existing profile
+        const { data: updateData, error: updateError } = await supabase
           .from("user_profiles")
-          .insert([
+          .upsert(
             {
+              user_id: userId,
               display_name: validatedData.displayName,
               age: validatedData.age,
               photo_url: validatedData.photo,
               interests: validatedData.interests,
-              user_id: userId,
+              email: user.email,
             },
-          ]);
+            {
+              onConflict: "user_id",
+              ignoreDuplicates: false,
+            }
+          )
+          .select()
+          .single();
 
-        if (supabaseError) {
-          setError(supabaseError.message);
+        if (updateError) {
+          console.error("Error saving profile:", updateError);
+          setError(updateError.message);
           return;
         }
 
-        router.push("/protected");
+        console.log("Profile saved successfully:", updateData);
+        window.location.href = "/protected";
       } catch (err) {
-        if (err instanceof z.ZodError) {
-          setError(err.errors[0].message);
-        }
-        return;
+        console.error("Error in form submission:", err);
+        setError(
+          err instanceof z.ZodError
+            ? err.errors[0].message
+            : "An error occurred"
+        );
       }
     }
   };
@@ -123,14 +146,21 @@ export default function OnboardingPage() {
     setError(null);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, photo: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setFormData((prev) => ({ ...prev, photo: base64String }));
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error processing file:", error);
+        setError("Failed to process photo");
+      }
     }
   };
 

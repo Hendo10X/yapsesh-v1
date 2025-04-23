@@ -36,7 +36,7 @@ const Preview = () => {
         </p>
         <Link
           href="/auth/login"
-          className="text-xs font-semibold z-50 hover:scale-110 transition-transform bg-white text-black rounded-full py-2 w-20 cursor-pointer mt-4 border border-black hover:bg-black hover:text-white text-center">
+          className="text-xs font-semibold z-50 hover:scale-110 transition-transform bg-white text-black rounded-full py-2 w-20 cursor-pointer mt-4 border border-black hover:bg-black hover:text-white text-center font-askhar">
           Get Started
         </Link>
       </motion.div>

@@ -40,15 +40,32 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Try to sign up the user
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
-      router.push("/auth/sign-up-success");
+
+      if (signUpError) {
+        // Check if error is because user already exists
+        if (
+          signUpError.message.toLowerCase().includes("email already registered")
+        ) {
+          setError(
+            "An account with this email already exists. Please login instead."
+          );
+          return;
+        }
+        throw signUpError;
+      }
+
+      if (data?.user) {
+        // Show success message and redirect to verification page
+        router.push("/auth/verify-email");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
