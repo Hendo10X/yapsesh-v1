@@ -31,7 +31,7 @@ const Preview = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.88, delay: 1.5 }}>
         <Image src="/YapSesh.svg" alt="logo" width={70} height={70} />
-        <p className="text-5xl md:text-7xl z-50 italic font-medium font-instrument-serif text-black">
+        <p className="text-5xl md:text-7xl z-50 italic font-instrument-serif text-black">
           Your voice, <br /> your story.
         </p>
         <Link
