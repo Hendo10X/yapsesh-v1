@@ -50,6 +50,17 @@ export default function ProtectedPage() {
     };
 
     checkUserAndProfile();
+
+    // Add event listener for tab changes
+    const handleTabChange = (event: CustomEvent) => {
+      setActiveTab(event.detail);
+    };
+
+    window.addEventListener("tabChange", handleTabChange as EventListener);
+
+    return () => {
+      window.removeEventListener("tabChange", handleTabChange as EventListener);
+    };
   }, [router, supabase]);
 
   const renderContent = () => {
@@ -67,14 +78,24 @@ export default function ProtectedPage() {
               damping: 20,
             }}
             className="mt-4 p-4">
-            <h2 className="text-xl font-semibold mb-4">Your Feed</h2>
-            <div className="space-y-4">
+            <motion.h2
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl font-semibold mb-4">
+              Your Feed
+            </motion.h2>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-4">
               <div className="p-1">
                 <p className="text-gray-600">
                   Your personalized content will appear here
                 </p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         );
       case "following":
@@ -90,14 +111,24 @@ export default function ProtectedPage() {
               damping: 20,
             }}
             className="mt-4 p-4">
-            <h2 className="text-xl font-semibold mb-4">Following</h2>
-            <div className="space-y-4">
+            <motion.h2
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl font-semibold mb-4">
+              Following
+            </motion.h2>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-4">
               <div className="p-1">
                 <p className="text-gray-600">
                   Content from people you follow will appear here
                 </p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         );
       case "polls":
@@ -133,11 +164,21 @@ export default function ProtectedPage() {
               stiffness: 300,
               damping: 20,
             }}
-            className=" mt-4 p-4">
-            <h2 className="text-xl font-semibold mb-4">Your Profile</h2>
-            <div className="space-y-4">
+            className="mt-4 p-4">
+            <motion.h2
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl font-semibold mb-4">
+              Your Profile
+            </motion.h2>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-4">
               {currentUser && <ProfileCard userId={currentUser} />}
-            </div>
+            </motion.div>
           </motion.div>
         );
       default:
@@ -148,15 +189,28 @@ export default function ProtectedPage() {
   return (
     <>
       <Toaster position="top-center" />
-      <div className="flex h-svh w-full flex-col items-center justify-start font-akshar">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex h-svh w-full flex-col items-center justify-start font-akshar">
         <Navbar />
-        <div className="w-full max-w-4xl mt-20">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 20,
+            delay: 0.2,
+          }}
+          className="w-full max-w-4xl mt-20">
           <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
           <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
-        </div>
+        </motion.div>
         {(activeTab === "for-you" || activeTab === "following") &&
           currentUser && <FloatingRecordButton userId={currentUser} />}
-      </div>
+      </motion.div>
     </>
   );
 }

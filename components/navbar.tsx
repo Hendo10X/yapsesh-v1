@@ -23,6 +23,7 @@ export function Navbar() {
       } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
+
         // Fetch user profile
         const { data: profileData } = await supabase
           .from("user_profiles")

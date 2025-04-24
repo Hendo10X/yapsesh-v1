@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-import { VoiceMemo } from "./voice-memo";
 import { toast } from "sonner";
+import { VoiceMemo } from "./voice-memo";
 
 interface UserProfile {
   id: string;
