@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { VoiceMemo } from "./voice-memo";
 
 interface UserProfile {
   id: string;
@@ -15,7 +14,6 @@ interface UserProfile {
   bio?: string;
   followers_count?: number;
   following_count?: number;
-  voice_memo_url?: string | null;
 }
 
 export function ProfileCard({ userId }: { userId: string }) {
@@ -103,21 +101,6 @@ export function ProfileCard({ userId }: { userId: string }) {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
-    }
-  };
-
-  const handleProfileUpdate = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error("Error updating profile:", error);
     }
   };
 
@@ -228,11 +211,6 @@ export function ProfileCard({ userId }: { userId: string }) {
           </span>
           <span className="text-gray-500">Following</span>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <h4 className="text-lg font-semibold mb-4">Voice Memo</h4>
-        <VoiceMemo userId={userId} onUpdate={handleProfileUpdate} />
       </div>
     </div>
   );
