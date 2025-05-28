@@ -17,8 +17,8 @@ interface VoiceMemo {
   likes_count: number;
   comments_count: number;
   user: {
-    full_name: string;
-    avatar_url: string;
+    display_name: string;
+    photo_url: string | null;
   };
 }
 
@@ -30,29 +30,60 @@ export function VoiceMemoFeed() {
   const fetchVoiceMemos = useCallback(async () => {
     try {
       console.log("Fetching voice memos...");
-      const { data, error } = await supabase
+      const { data: memos, error: memosError } = await supabase
         .from("voice_memos")
-        .select(
-          `
-          *,
-          user:user_id (
-            full_name,
-            avatar_url
-          )
-        `
-        )
+        .select("*")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching voice memos:", error);
-        throw error;
+      if (memosError) {
+        console.error("Error fetching voice memos:", memosError.message);
+        toast.error("Failed to load voice memos");
+        throw memosError;
       }
 
-      console.log("Fetched voice memos:", data);
-      setVoiceMemos(data || []);
+      if (!memos) {
+        console.log("No voice memos found");
+        setVoiceMemos([]);
+        return;
+      }
+
+      // Get unique user IDs from memos
+      const userIds = [...new Set(memos.map((memo) => memo.user_id))];
+
+      // Fetch user profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name, photo_url")
+        .in("user_id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching user profiles:", profilesError.message);
+        throw profilesError;
+      }
+
+      // Create a map of user profiles
+      const profileMap = new Map(
+        profiles?.map((profile) => [profile.user_id, profile]) || []
+      );
+
+      // Combine memos with user profiles
+      const memosWithProfiles = memos.map((memo) => ({
+        ...memo,
+        user: profileMap.get(memo.user_id) || {
+          display_name: "Unknown User",
+          photo_url: null,
+        },
+      }));
+
+      console.log("Fetched voice memos with profiles:", memosWithProfiles);
+      setVoiceMemos(memosWithProfiles);
     } catch (error) {
-      console.error("Error in fetchVoiceMemos:", error);
+      console.error(
+        "Error in fetchVoiceMemos:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      toast.error("Failed to load voice memos");
       setVoiceMemos([]);
     } finally {
       setLoading(false);
@@ -68,16 +99,19 @@ export function VoiceMemoFeed() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "voice_memos",
+          filter: "is_published=eq.true",
         },
         (payload) => {
-          console.log("Received voice memo change:", payload);
+          console.log("Received new voice memo:", payload);
           fetchVoiceMemos();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
 
     return () => {
       console.log("Cleaning up voice memos subscription...");
@@ -125,19 +159,19 @@ export function VoiceMemoFeed() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-xl mx-auto">
       {voiceMemos.map((memo) => (
         <div key={memo.id} className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center gap-3 mb-4">
             <Avatar>
-              <AvatarImage src={memo.user?.avatar_url} />
+              <AvatarImage src={memo.user?.photo_url || undefined} />
               <AvatarFallback>
-                {memo.user?.full_name?.charAt(0) || "U"}
+                {memo.user?.display_name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="font-medium">
-                {memo.user?.full_name || "Unknown User"}
+                {memo.user?.display_name || "Unknown User"}
               </div>
               <div className="text-sm text-gray-500">
                 {formatDistanceToNow(new Date(memo.created_at), {

@@ -11,7 +11,11 @@ import {
 import { useState } from "react";
 import { RecordModal } from "./record-modal";
 
-export function FloatingRecordButton() {
+interface FloatingRecordButtonProps {
+  userId: string;
+}
+
+export function FloatingRecordButton({ userId }: FloatingRecordButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,7 +45,7 @@ export function FloatingRecordButton() {
             <DialogTitle className="font-akshar">Create Audio Post</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <RecordModal />
+            <RecordModal userId={userId} />
           </div>
         </DialogContent>
       </Dialog>

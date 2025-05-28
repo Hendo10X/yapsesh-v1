@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { FloatingRecordButton } from "@/components/floating-record-button";
+import { VoiceMemoFeed } from "@/components/voice-memo-feed";
 
 export default function ProtectedPage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function ProtectedPage() {
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-xl font-semibold mb-4">
+              className="text-xl font-semibold mb-4 text-center">
               Your Feed
             </motion.h2>
             <motion.div
@@ -90,11 +91,7 @@ export default function ProtectedPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
               className="space-y-4">
-              <div className="p-1">
-                <p className="text-gray-600">
-                  Your personalized content will appear here
-                </p>
-              </div>
+              <VoiceMemoFeed />
             </motion.div>
           </motion.div>
         );

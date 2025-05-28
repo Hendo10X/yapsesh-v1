@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS voice_memos (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     is_published BOOLEAN DEFAULT false,
     likes_count INTEGER DEFAULT 0,
-    comments_count INTEGER DEFAULT 0
+    comments_count INTEGER DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES user_profiles(user_id) ON DELETE CASCADE
 );
 
 -- Enable Row Level Security

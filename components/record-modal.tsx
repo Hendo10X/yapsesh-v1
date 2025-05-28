@@ -7,7 +7,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 
-export function RecordModal() {
+interface RecordModalProps {
+  userId: string;
+}
+
+export function RecordModal({ userId }: RecordModalProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [title, setTitle] = useState("");
@@ -19,6 +23,7 @@ export function RecordModal() {
   const streamRef = useRef<MediaStream | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const supabase = createClient();
+  const MAX_DURATION = 180; // 3 minutes in seconds
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -37,7 +42,9 @@ export function RecordModal() {
       durationIntervalRef.current = setInterval(() => {
         setDuration((prev) => {
           const newDuration = prev + 1;
-          console.log("Recording duration:", newDuration, "seconds");
+          if (newDuration >= MAX_DURATION) {
+            stopRecording();
+          }
           return newDuration;
         });
       }, 1000);
@@ -54,7 +61,7 @@ export function RecordModal() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [isRecording]);
+  }, [isRecording, stopRecording]);
 
   const startRecording = async () => {
     try {
@@ -168,14 +175,6 @@ export function RecordModal() {
     if (!audioUrl) return;
     setIsPosting(true);
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("User not authenticated");
-      }
-
       // Create a new blob from the audio chunks
       const audioBlob = new Blob(audioChunksRef.current, {
         type: mediaRecorderRef.current?.mimeType || "audio/webm",
@@ -185,10 +184,13 @@ export function RecordModal() {
         throw new Error("No audio data to upload");
       }
 
+      console.log("Audio blob size:", audioBlob.size, "bytes");
+
       const fileName = `voice-memo-${Date.now()}.webm`;
+      console.log("Uploading file:", fileName);
 
       // Upload the audio file
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("voice-memos")
         .upload(fileName, audioBlob, {
           upsert: true,
@@ -196,29 +198,38 @@ export function RecordModal() {
         });
 
       if (uploadError) {
+        console.error("Upload error:", uploadError);
         throw new Error(`Failed to upload audio: ${uploadError.message}`);
       }
+
+      console.log("File uploaded successfully:", uploadData);
 
       // Get the public URL
       const {
         data: { publicUrl },
       } = supabase.storage.from("voice-memos").getPublicUrl(fileName);
 
+      console.log("Public URL:", publicUrl);
+
       // Save directly to database with is_published set to true
-      const { error: dbError } = await supabase.from("voice_memos").insert({
-        user_id: user.id,
-        title: title || `Voice Memo ${new Date().toLocaleString()}`,
-        audio_url: publicUrl,
-        duration: duration,
-        created_at: new Date().toISOString(),
-        is_published: true,
-        likes_count: 0,
-        comments_count: 0,
-      });
+      const { data: insertData, error: dbError } = await supabase
+        .from("voice_memos")
+        .insert({
+          user_id: userId,
+          title: title || `Voice Memo ${new Date().toLocaleString()}`,
+          audio_url: publicUrl,
+          duration: duration,
+          created_at: new Date().toISOString(),
+          is_published: true,
+        })
+        .select();
 
       if (dbError) {
+        console.error("Database error:", dbError);
         throw new Error(`Database error: ${dbError.message}`);
       }
+
+      console.log("Database insert successful:", insertData);
 
       toast.success("Voice memo posted to feed!");
 
@@ -266,8 +277,7 @@ export function RecordModal() {
         });
 
       if (uploadError) throw uploadError;
- 
-      
+
       const {
         data: { publicUrl },
       } = supabase.storage.from("voice-memos").getPublicUrl(fileName);
@@ -277,12 +287,11 @@ export function RecordModal() {
         user_id: user.id,
         title: title || file.name,
         audio_url: publicUrl,
-        duration: 0, 
+        duration: 0,
       });
 
       if (dbError) throw dbError;
 
-      
       const localUrl = URL.createObjectURL(file);
       setAudioUrl(localUrl);
       toast.success("Audio uploaded successfully!");
@@ -300,17 +309,21 @@ export function RecordModal() {
         placeholder="Give your voice memo a title (optional)"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="font-akshar"
+        className="font-akshar border-blue-100 focus:border-blue-300"
       />
       <div className="grid grid-cols-2 gap-4">
         <Button
           variant="outline"
-          className="h-24 w-full flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:text-black"
+          className={`h-24 w-full flex flex-col items-center justify-center gap-2 transition-all duration-200 ${
+            isRecording
+              ? "bg-red-50 border-red-200 hover:bg-red-100"
+              : "hover:bg-blue-50 border-blue-100"
+          }`}
           onClick={isRecording ? stopRecording : startRecording}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className={`h-8 w-8 ${
-              isRecording ? "text-red-500 animate-pulse" : ""
+              isRecording ? "text-red-500 animate-pulse" : "text-blue-500"
             }`}
             viewBox="0 0 24 24"
             fill="none"
@@ -336,11 +349,11 @@ export function RecordModal() {
           />
           <Button
             variant="outline"
-            className="h-24 w-full flex flex-col items-center justify-center gap-2 hover:bg-blue-50"
+            className="h-24 w-full flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-blue-100"
             onClick={() => document.getElementById("audio-upload")?.click()}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8"
+              className="h-8 w-8 text-blue-500"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -357,12 +370,12 @@ export function RecordModal() {
         {isRecording && (
           <div className="col-span-2 text-center text-sm text-gray-500">
             Recording... {Math.floor(duration / 60)}:
-            {(duration % 60).toString().padStart(2, "0")}
+            {(duration % 60).toString().padStart(2, "0")} / 3:00
           </div>
         )}
         {audioUrl && (
           <div className="col-span-2 space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <audio
                 ref={audioRef}
                 controls
@@ -373,7 +386,7 @@ export function RecordModal() {
               </audio>
             </div>
             <Button
-              className="w-full bg-black hover:bg-gray-800 text-white"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200"
               onClick={handlePost}
               disabled={isPosting}>
               {isPosting ? (
