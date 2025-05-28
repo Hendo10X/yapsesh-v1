@@ -19,7 +19,7 @@ export function FloatingRecordButton() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button
-            className="rounded-full h-16 w-16 bg-black hover:bg-gray-800 text-white shadow-lg"
+            className="rounded-full h-16 w-16 bg-black hover:bg-black text-white"
             onClick={() => setIsOpen(true)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -10,7 +10,7 @@ export default function FollowingPage() {
       <Navbar />
       <div className="w-full max-w-4xl px-4">
         <ProfileContent />
-        <TabNav />
+        <TabNav activeTab={"following"} onTabChange={() => {}} />
         <div className="mt-8">
           {/* Following content will go here */}
           <h2 className="text-2xl font-medium">Following</h2>
